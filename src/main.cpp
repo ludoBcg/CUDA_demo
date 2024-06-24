@@ -16,11 +16,6 @@
 
 GLFWwindow *m_window;
 
-GLuint m_tex3D;
-struct cudaGraphicsResource* m_texCUDA; 
-//int m_size = 16*16*16*4*4;
-//GLubyte* m_data = new GLubyte;
-
 
 
  /*--------------------------------------------------------------------------------------------------------+
@@ -41,8 +36,8 @@ int main(void)
     // 2. 2D convolution kernel -------------------------------------------------
     {
         std::cout << "\n\n 2. Test 2D convolution ------------------------\n";
-        cudademo::testConvolution("../src/lenna.png", "../src/result.png");
-        cudademo::convolutionCPU("../src/lenna.png", "../src/result2.png");
+        cudademo::testConvolution("../src/lenna.png", "../src/resConvGPU.png");
+        cudademo::convolutionCPU("../src/lenna.png", "../src/resConvCPU.png");
     }
 
     // 3. OpenGL Interoperability -----------------------------------------------
@@ -65,8 +60,8 @@ int main(void)
         std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl
             << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
 
-        cudademo::createTex3D(m_tex3D);
-        cudademo::testTexture(m_tex3D, m_texCUDA);
+        
+        cudademo::testTextureObject("../src/lenna.png", "../src/resCUDAtex.png");
 
         while (!glfwWindowShouldClose(m_window)) {
             glfwPollEvents();

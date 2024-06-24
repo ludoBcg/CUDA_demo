@@ -44,7 +44,7 @@ void convol(int _dimX, int _dimY, unsigned char* _in, unsigned char* _out, float
         for (int j = idY; j < _dimY; j += strideY)
         {
             // index of current thread in pixel grid
-            int index = idY * _dimX * nbChannels + idX;
+            int index = j * _dimX * nbChannels + i;
 
             float sumR = 0.0f, sumG = 0.0f, sumB = 0.0f;
             // 3x3 window scanning to apply filter
@@ -52,10 +52,10 @@ void convol(int _dimX, int _dimY, unsigned char* _in, unsigned char* _out, float
             {
                 for (int y = -winRadius, fy = 0; y <= winRadius; y++, fy++)
                 {
-                    if ((idY + y) > 0 && (idY + y) < _dimY && (idX + x) > 0 && (idX + x) < _dimX * 4)
+                    if ((j + y) > 0 && (j + y) < _dimY && (i + x) > 0 && (i + x) < _dimX * 4)
                     {
                         // index of current neighbor in pixel grid
-                        int indexNh = (idY + y) * _dimX * nbChannels + (idX + x);
+                        int indexNh = (j + y) * _dimX * nbChannels + (i + x);
                         // corresponding index in filter window
                         int indexWin = fy * 3 + fx;
                         // get filter value
@@ -119,8 +119,8 @@ void testConvolution(const std::string& _filenameIn, const std::string& _filenam
 
     // define 2D blocks of 16x16 threads
     dim3 blockSize(16, 16);
-    dim3 numBlocks((width + blockSize.x - 1) / blockSize.x, 
-                   (height + blockSize.y - 1) / blockSize.y);
+    dim3 numBlocks( (width + blockSize.x - 1) / blockSize.x, 
+                   (height + blockSize.y - 1) / blockSize.y );
 
     gpuChrono.start("kernel convolution");
 
