@@ -60,8 +60,9 @@ int main(void)
         std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl
             << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
 
-        
         cudademo::testTextureObject("../src/lenna.png", "../src/resCUDAtex.png");
+
+        cudademo::testPBO("../src/lenna.png", "../src/resPBO.png");
 
         while (!glfwWindowShouldClose(m_window)) {
             glfwPollEvents();
