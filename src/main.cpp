@@ -62,12 +62,16 @@ int main(void)
 
         cudademo::testTextureObject("../src/lenna.png", "../src/resCUDAtex.png");
 
-        cudademo::testPBO("../src/lenna.png", "../src/resPBO.png");
+        //cudademo::testPBO("../src/lenna.png", "../src/resPBO.png");
+
+        cudademo::testPBO3D();
 
         while (!glfwWindowShouldClose(m_window)) {
             glfwPollEvents();
             glfwSwapBuffers(m_window);
         }
+
+        std::cout << "\n\n Exit" << std::endl;
 
         glfwDestroyWindow(m_window);
         glfwTerminate();

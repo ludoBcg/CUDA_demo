@@ -92,6 +92,39 @@ void simpleKernelPBO(int _dimX, int _dimY, unsigned char* _in, unsigned char* _o
 
 
 
+__global__
+void simpleKernelPBO3D(int _dimX, int _dimY, int _dimZ,unsigned char* _in, unsigned char* _out)
+{
+    int nbChannels = 4; // RGBA
+
+    int idX = blockIdx.x * blockDim.x * nbChannels + threadIdx.x * nbChannels;
+    int idY = blockIdx.y * blockDim.y + threadIdx.y;
+    int idZ = blockIdx.z * blockDim.z + threadIdx.z;
+    int strideX = blockDim.x * gridDim.x * nbChannels;
+    int strideY = blockDim.y * gridDim.y;
+    int strideZ = blockDim.z * gridDim.z;
+
+    for (int i = idX; i < _dimX * nbChannels; i += strideX)
+    {
+        for (int j = idY; j < _dimY; j += strideY)
+        {
+            for (int k = idZ; k < _dimZ; k += strideZ)
+            {
+                int index =   (k * _dimY * _dimX * nbChannels) 
+                            + (j * _dimX * nbChannels) 
+                            + i;
+
+                // simply writes uniform color
+                _out[index] = 0;
+                _out[index + 1] = 255;
+                _out[index + 2] = 0;
+                _out[index + 3] = 255;
+            }
+        }
+    }
+}
+
+
  /*--------------------------------------------------------------------------------------------------------+
  |                                               HOST CODE                                                 |
  +--------------------------------------------------------------------------------------------------------*/
@@ -109,8 +142,11 @@ void printErrors(cudaError_t _cudaErr)
 }
 
 
-// Creates an OpenGL 3D texture
-void createTex3D(GLuint& _tex3D)
+
+/* 
+ * Creates an empty OpenGL 3D texture
+ */
+void createTex3D(GLuint& _tex3D, const int _imWidth, const int _imHeight, const int _imDepth)
 {
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
     glGenTextures(1, &_tex3D);
@@ -123,63 +159,12 @@ void createTex3D(GLuint& _tex3D)
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
  
         // int 8 rgba texture
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8UI, 16, 16, 16, 0, GL_RGBA_INTEGER, GL_UNSIGNED_BYTE, NULL /*data*/);
+        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8UI, _imWidth, _imHeight, _imDepth, 0, GL_RGBA_INTEGER, GL_UNSIGNED_BYTE, NULL /*data*/);
     }
 
+    printErrors();
     glBindTexture(GL_TEXTURE_3D, 0);
 }
-
-void testTexture(const GLuint& _tex3D, cudaGraphicsResource* _texCUDA)
-{
-    // Register the texture as an image with CUDA
-    cudaError_t err =  cudaGraphicsGLRegisterImage( &_texCUDA, 
-                                                    _tex3D, 
-                                                    GL_TEXTURE_3D,
-                                                    cudaGraphicsMapFlagsNone);
-                                                    /*cudaGraphicsRegisterFlagsSurfaceLoadStore*/
-                                                    /* Textures are read-only, surfaces are writable and readable */
-
-    printErrors(err);
-
-    // Map the image to a CUDA graphics resource
-    err = cudaGraphicsMapResources(1, &_texCUDA, 0);
-    //cudaBindSurfaceToArray
-    printErrors(err);
-
-
-    // get a cudaArray pointer from the resource
-    cudaArray_t cuda_array;
-    err = cudaGraphicsSubResourceGetMappedArray(&cuda_array, _texCUDA, 0, 0);
-    printErrors(err);
-
-    // pass the cudaArray pointer to the device
-    //launch_kernel(cuda_image_array, textureDim);
-    //{
-    //    dim3 block_dim(8, 8, 8);
-    //    dim3 texture_dim(16, 16, 16);
-	   // dim3 grid_dim(texture_dim.x/block_dim.x, texture_dim.y/block_dim.y, texture_dim.z/block_dim.z);
- 
-    //    cudaError_t err;
-	   // //Bind voxel array to a writable CUDA surface
-    //    err = cudaBindSurfaceToArray(surfaceWrite, cuda_array);
-	   // if( err != cudaSuccess) {
-    //        std::cerr << "ERROR: " << cudaGetErrorString(err) << std::endl;
-    //        return;
-    //    }
-
-	   // kernel<<< grid_dim, block_dim >>>(texture_dim);
-    //}
-
-    err = cudaGraphicsUnmapResources(1, &_texCUDA, 0);
-    printErrors(err);
-
-    err = cudaGraphicsUnregisterResource(_texCUDA);
-    printErrors(err);
-
-    return;
-}
-
-
 
 
 /* 
@@ -390,6 +375,75 @@ void testPBO(const std::string& _filenameIn, const std::string& _filenameOut)
     cudaMemcpy(&result[0], d_output, numBytes, cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
     lodepngErr = lodepng::encode(_filenameOut, result, imWidth, imHeight);
+    if (lodepngErr != 0) { std::cerr << "lodepng::encode(): " << lodepng_error_text(lodepngErr) << std::endl;
+                           std::exit(EXIT_FAILURE); }
+
+
+    // 6. Finally unmap resource and free memory -----------------------------------
+    err = cudaGraphicsUnmapResources(1, &m_texCUDA, 0);
+    printErrors(err);
+    cudaFree(d_output);
+    cudaFree(cuda_mapped_ptr);
+}
+
+
+
+/* 
+ * PBO3D test
+ * Pixel Buffer Object for 3D texture
+ */
+void testPBO3D()
+{
+    unsigned imWidth = 16, imHeight = 16, imDepth = 16;
+    // total nb of 8b values in the image (i.e., nb of pixels * nb of channels)
+    unsigned int imTotalDim = imWidth * imHeight * imDepth * 4;
+
+    // Init OpenGL texture with PNG image
+    cudademo::createTex3D(m_texOGL_2D, imWidth, imHeight, imDepth);
+
+    // Init OpenGL PBO with PNG image
+    std::vector<unsigned char> emptyVector;
+    emptyVector.assign(imTotalDim, 0);
+    cudademo::createPBO(m_PBO, imTotalDim, emptyVector);
+
+
+    // CUDA / OpenGL interop -------------------------------------------------------
+
+    // 1. Register the PBO as a CUDA graphics resource -----------------------------
+    cudaError_t err = cudaGraphicsGLRegisterBuffer(&m_texCUDA, m_PBO, cudaGraphicsMapFlagsNone); 
+    printErrors(err);
+
+
+    // 2. map the CUDA graphic resource to a pointer -------------------------------
+    unsigned char* cuda_mapped_ptr = nullptr;
+    size_t numBytes = imTotalDim * sizeof(unsigned char);
+    cudaMalloc((void**)&cuda_mapped_ptr, numBytes);
+    err = cudaGraphicsMapResources(1, &m_texCUDA, 0);
+    printErrors(err);
+    size_t size;
+    err = cudaGraphicsResourceGetMappedPointer( (void **)&cuda_mapped_ptr, &size, m_texCUDA);
+    printErrors(err);
+
+
+    // 3. Allocate a device memory buffer to store result --------------------------
+    unsigned char *d_output;
+    cudaMalloc((void**)&d_output, numBytes);
+
+
+    // 4. Execute kernel, using CUDA mapped ptr as input ---------------------------
+    dim3 blockSize(8, 8, 8);
+    dim3 numBlocks((imWidth + blockSize.x - 1) / blockSize.x, 
+                   (imHeight + blockSize.y - 1) / blockSize.y,
+                   (imDepth + blockSize.z - 1) / blockSize.z );
+    simpleKernelPBO3D<<<numBlocks, blockSize>>> (imWidth, imHeight, imDepth, cuda_mapped_ptr, d_output);
+    cudaDeviceSynchronize();
+
+    // 5. Export a portion of result to a new image --------------------------------
+    std::vector<unsigned char> result;
+    result.assign(imWidth * imHeight * 4, 100);
+    cudaMemcpy(&result[0], d_output, imWidth * imHeight * 4 * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    unsigned lodepngErr = lodepng::encode("../src/resPBO3D.png", result, imWidth, imHeight);
     if (lodepngErr != 0) { std::cerr << "lodepng::encode(): " << lodepng_error_text(lodepngErr) << std::endl;
                            std::exit(EXIT_FAILURE); }
 
