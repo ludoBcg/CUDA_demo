@@ -15,8 +15,6 @@
 
 namespace cudademo
 {
-    void printErrors(cudaError_t _cudaErr = cudaSuccess);
-
 
     void createTex3D(GLuint& _tex3D, const int _imWidth, const int _imHeight, const int _imDepth);
     void createTex2D(GLuint& _tex2D, const int _imWidth, const int _imHeight,
