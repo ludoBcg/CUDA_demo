@@ -99,4 +99,16 @@ namespace cudademo
         printErrors();
 	}
 
+
+    /* 
+    * Prints CUDA / OpenGL errors if not successful
+    */
+    void printErrors(cudaError_t _cudaErr)
+    {
+	    // prints last OpenGL error
+	    if (glGetError() != 0) { std::cerr << "OpenGL error : " << glGetError() << std::endl; }
+
+	    // prints CUDA error
+	    if (_cudaErr != cudaSuccess) {std::cerr << "CUDA error: " << cudaGetErrorString(_cudaErr) << std::endl;}
+    }
 }

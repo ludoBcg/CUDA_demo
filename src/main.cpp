@@ -34,7 +34,7 @@ int m_winWidth = 1024;
 int m_winHeight = 720;
 
 // Light and cameras 
-cudademo::Camera m_camera;
+GLtools::Camera m_camera;
 float m_zoomFactor;
 
 // 3D objects
@@ -132,7 +132,7 @@ void initScene()
     m_camera.init(0.01f, 4.0f, 45.0f, 1.0f,
                   m_winWidth, m_winHeight,
                   glm::vec3(0.6f, 0.3f, 1.5f),
-                  glm::vec3(0.0f, 0.0f, 0.0f) );
+                  glm::vec3(0.0f, 0.0f, 0.0f), 0 );
 
     m_ui.sliceIdA = m_volume->getDimensions()[2] / 2;
     m_ui.sliceIdC = m_volume->getDimensions()[1] / 2;
@@ -209,7 +209,7 @@ void resizeCallback(GLFWwindow* window, int width, int height)
     m_winHeight = height;
 
     // re-init camera
-    m_camera.initProjectionMatrix(m_winWidth, m_winHeight, m_zoomFactor);
+    m_camera.initProjectionMatrix(m_winWidth, m_winHeight, m_zoomFactor, 0);
 
     // keep drawing while resize
     display();
@@ -251,7 +251,7 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
     {
         m_zoomFactor -= (float)yoffset / 10.0f;
         // update camera
-        m_camera.initProjectionMatrix(m_winWidth, m_winHeight, m_zoomFactor);
+        m_camera.initProjectionMatrix(m_winWidth, m_winHeight, m_zoomFactor, 0);
     }
     
 }

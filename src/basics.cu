@@ -142,8 +142,8 @@ void saxpy(int _n, float _a, float* _x, float* _y)
 
 void testBasics()
 {
-    cpuTimer cpuChrono;
-    gpuTimer gpuChrono;
+    GLtools::CpuTimer cpuChrono;
+    GLtools::GpuTimer gpuChrono;
 
     int N = 1<<20; // N = 1M elements
     std::cout << "Number of elements: " << N << std::endl;

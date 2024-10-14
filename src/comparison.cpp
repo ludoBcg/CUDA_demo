@@ -26,7 +26,7 @@ void saxpyCPU(float _a)
         arrayY[i] = 2.0f;
     }
 
-    cpuTimer cpuChrono;
+    GLtools::CpuTimer cpuChrono;
     cpuChrono.start("OpenMP saxpy");
 
     // parallelized loop using OpenMP
@@ -76,7 +76,7 @@ void convolutionCPU(const std::string& _filenameIn, const std::string& _filename
     int nbChannels = 4; // RGBA
     int winRadius = 1;  // filter window radius
 
-    cpuTimer cpuChrono;
+    GLtools::CpuTimer cpuChrono;
     cpuChrono.start("OpenMP convolution");
 
     // #pragma omp parallel for collapse(2) // OpenMP 2.0. not supported by msvc

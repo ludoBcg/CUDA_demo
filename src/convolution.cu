@@ -86,7 +86,7 @@ void convol(int _dimX, int _dimY, unsigned char* _in, unsigned char* _out, float
 
 void testConvolution(const std::string& _filenameIn, const std::string& _filenameOut)
 {
-    gpuTimer gpuChrono;
+    GLtools::GpuTimer gpuChrono;
 
     // read PNG image and store pixel in vector of 8b values
     // (each pixels is represented by 4 consecutiove values: one for each RGBA channel)

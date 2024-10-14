@@ -12,9 +12,6 @@
 # check CMAKE version
 cmake_minimum_required(VERSION 3.8)
 
-# PATH TO EXTERNAL LIBS
-set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
-
 # create project
 project(CUDA_demo LANGUAGES CXX CUDA)
 
@@ -47,12 +44,14 @@ set(HEADERS
     src/basics.h
     src/convolution.h
 	src/interop.h
-	src/tools.h
 	src/mesh.h
 	src/volume.h
 	src/gui.h
     )
 
+# Dependencies folder
+set(LIBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libs")
+include_directories(SYSTEM "${LIBS_DIR}")
 
 
 ######################################################################################################
@@ -65,11 +64,9 @@ SET(CUDA_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.8")
 include_directories(${CUDA_DIR}/include)
 link_directories(${CUDA_DIR}/lib/x64)
 SET(CUDA_LIBS ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} cudart.lib)
+# flag for conditional compilation
+add_compile_definitions(USE_CUDA)
 
-
-# lodepng ------------------------------------------------------------
-aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/lodepng" SRCS)
-include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/src/lodepng")
 
 
 # OpenGL -------------------------------------------------------------
@@ -77,10 +74,12 @@ find_package(OpenGL REQUIRED)
 if(OPENGL_FOUND)
   include_directories(SYSTEM ${OPENGL_INCLUDE_DIR})
 endif(OPENGL_FOUND)
+# flag for conditional compilation
+add_compile_definitions(USE_OPENGL)
 
 
 # GLEW (download binaries for windows) -------------------------------
-set(GLEW_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glew-2.1.0")
+set(GLEW_DIR "${LIBS_DIR}/third_party/glew-2.1.0")
 include_directories(${GLEW_DIR}/include)
 link_directories(${GLEW_DIR}/lib/Release/x64)
 # use glew32s only
@@ -89,18 +88,18 @@ add_definitions(-DGLEW_STATIC -DGLEW_NO_GLU)
 
 
 # GLFW (to compile before) -------------------------------------------
-set(GLFW_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glfw-3.3.8")
+set(GLFW_DIR "${LIBS_DIR}/third_party/glfw-3.4")
 include_directories(${GLFW_DIR}/include)
 link_directories(${GLFW_DIR}/build/src/Release)
 SET(GLFW_LIBS glfw3.lib)
 
 
 # GLM (Header only) --------------------------------------------------
-include_directories(SYSTEM "${EXTERNAL_DIR}/glm")
+include_directories(SYSTEM "${LIBS_DIR}/third_party/glm-1.0.1")
 
 
 # ImGui (add sources to project) -------------------------------------
-set(IMGUI_DIR "${EXTERNAL_DIR}/imgui")
+set(IMGUI_DIR "${LIBS_DIR}/third_party/imgui")
 aux_source_directory("${IMGUI_DIR}" SRCS)
 # new: add appropriate backends
 set(IMGUI_BCK "${IMGUI_DIR}/backends/imgui_impl_glfw.h"
@@ -109,6 +108,11 @@ set(IMGUI_BCK "${IMGUI_DIR}/backends/imgui_impl_glfw.h"
 			  "${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp")					
 include_directories(SYSTEM "${IMGUI_DIR}")
 include_directories(SYSTEM "${IMGUI_DIR}/backends")
+
+
+# lodepng ------------------------------------------------------------
+aux_source_directory("${LIBS_DIR}/third_party/lodepng" SRCS)
+include_directories(SYSTEM "${LIBS_DIR}/third_party/lodepng")
 
 
 
