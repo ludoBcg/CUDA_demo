@@ -23,6 +23,7 @@
 
 // Include GLM
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_INTRINSICS // fix glm 1.0.3 incompatibility with VS2022 (SIMD alignments)
 #include <glm/glm.hpp>
 
 

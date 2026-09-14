@@ -79,7 +79,7 @@ add_compile_definitions(USE_OPENGL)
 
 
 # GLEW (download binaries for windows) -------------------------------
-set(GLEW_DIR "${LIBS_DIR}/third_party/glew-2.1.0")
+set(GLEW_DIR "${LIBS_DIR}/third_party/glew-2.3.1")
 include_directories(${GLEW_DIR}/include)
 link_directories(${GLEW_DIR}/lib/Release/x64)
 # use glew32s only
@@ -95,7 +95,7 @@ SET(GLFW_LIBS glfw3.lib)
 
 
 # GLM (Header only) --------------------------------------------------
-include_directories(SYSTEM "${LIBS_DIR}/third_party/glm-1.0.1")
+include_directories(SYSTEM "${LIBS_DIR}/third_party/glm-1.0.3")
 
 
 # ImGui (add sources to project) -------------------------------------
